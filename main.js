@@ -10,6 +10,11 @@ function modifyElement () {
   app.engine.setProperty(selectedViews[0], 'height',60);
 }
 
+function modifyClassModelChild(){
+  var diagram=app.diagrams.getCurrentDiagram()
+
+}
+
 function createModel () {
   var diagram1=app.diagrams.getCurrentDiagram()
   var options1 = {
@@ -81,6 +86,7 @@ function postSelectedModel(){
 
 function init () {
   app.commands.register('helloworld:show-message', handleShowMessage)
+  //创建类事件
   app.factory.on('elementCreated',function(model,view){
     console.log(view.model.name)
     console.log(view.left)
@@ -88,9 +94,11 @@ function init () {
     console.log(view.width)
     console.log(view.height)
   })
+  //修改类名称或者点击创建/删除属性或接口事件
   app.repository.on('updated',function(updatedElems){
     var flag=false
     for(i=0;i<updatedElems.length;i++){
+      console.log()
       if(updatedElems[i].getDisplayClassName()==='Class'){
         name=updatedElems[i].name
         console.log(name)
@@ -118,8 +126,32 @@ function init () {
         console.log(view.height)
       }
     }
+    console.log("this is end point")
 
   })
+  //编辑属性或接口名称事件
+  app.repository.on('operationExecuted',function(operation){
+    console.log(operation)
+    if(operation.name=='change properties'||operation.name=='change operation'){
+      console.log(app.selections.getSelectedModels()[0]._parent.name)
+      console.log(operation.ops[0].arg.n)
+      console.log(operation.ops[0].arg.o)
+    }
+    if(operation.name=='move views'){
+
+    }
+    if(operation.name=='resize node'){
+      
+    }
+  })
+
+
+//   app.repository.on('updated',function(updatedElems){
+//     for(i=0;i<updatedElems.length;i++){
+//       console.log(updatedElems[i])
+//     }
+//     console.log("this is end point")
+//   })
 
 }
 
