@@ -1,7 +1,3 @@
-//view到model是多对一的关系 两方都有对应的api，所以可能开发架构的核心类是以view为中心这个样子的
-//具体是指先获取到对应的diagram这个视图，然后遍历每个view看对应model的name是否正确
-
-//修改名称
 function modifyClassName(newName){
   var diagram=app.diagrams.getCurrentDiagram()
   var views=diagram.ownedViews
@@ -137,6 +133,13 @@ function postSelectedView(){
 function init () {
   app.commands.register('helloworld:show-message', handleShowMessage)
   //创建类事件
+  app.dialogs.showInputDialog("Enter your name.").then(function ({buttonId, returnValue}) {
+    if (buttonId === 'ok') {
+      console.log("Your name is", returnValue)
+    } else {
+      console.log("User canceled")
+    }
+  })
   app.factory.on('elementCreated',function(model,view){
     console.log(view.model.name)
     console.log(view.left)
@@ -151,7 +154,12 @@ function init () {
       console.log()
       if(updatedElems[i].getDisplayClassName()==='Class'){
         name=updatedElems[i].name
-        console.log(name)
+        var star=updatedElems[i];
+        var ass=star.ownedElement[0];
+        console.log("sss");
+        console.log(ass);
+        console.log(name);
+
         flag=true
         break
       }
@@ -182,7 +190,7 @@ function init () {
   })
   //编辑属性或接口名称事件
   app.repository.on('operationExecuted',function(operation){
-    
+
     if(operation.name=='change properties'||operation.name=='change operation'){
       console.log(app.selections.getSelectedModels()[0]._parent.name)
       console.log(operation.ops[0].arg.n)
@@ -192,7 +200,7 @@ function init () {
       console.log(operation)
     }
     if(operation.name=='resize node'){
-      
+
     }
   })
 
@@ -207,4 +215,3 @@ function init () {
 }
 
 exports.init = init
-
