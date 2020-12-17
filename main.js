@@ -104,10 +104,11 @@ function createModel () {
 
 //目前默认全部修改的是“Class1”这个类，所有四个函数验证可用
 function handleShowMessage(){
-  modifyClassName('Student')
+  // modifyClassName('Student')
   // moveView()
   // resizeView()
   // modifyClassModelAttribute()
+  connectServer()
 }
 
 //图内选择一个class元素就是同时选择了view和model
@@ -203,7 +204,43 @@ function init () {
 //     }
 //     console.log("this is end point")
 //   })
+  
 
+
+}
+
+var socket
+
+function connectServer(){
+  var socket_ip="127.0.0.1"
+		
+  socket= new WebSocket('ws://'+socket_ip+':9090')
+
+  socket.onopen = function(event)
+  {
+    console.log("连接服务成功！")
+    sendMsg()
+  }
+  // 监听消息
+  socket.onmessage = function(event)
+  {
+    console.log('Client received a message',event)
+    console.log(event.data)
+  }
+
+  // 监听Socket的关闭
+  socket.onclose = function(event)
+  {
+    console.log('连接已经断开')
+  }
+
+  socket.onerror = function(event) {
+    alert('无法连接到:' + socket_ip);
+  }
+}
+
+function sendMsg(){
+  socket.send("你好！"); 
 }
 
 exports.init = init
