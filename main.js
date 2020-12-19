@@ -212,9 +212,9 @@ function init () {
 var socket
 
 function connectServer(){
-  var socket_ip="127.0.0.1"
+  var socket_ip="121.4.81.114"
 		
-  socket= new WebSocket('ws://'+socket_ip+':9090')
+  socket= new WebSocket('ws://'+socket_ip+':8092')
 
   socket.onopen = function(event)
   {
