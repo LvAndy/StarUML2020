@@ -14,12 +14,13 @@ function modifyClassName(newName){
   }
 }
 
-function moveView(){
+function moveView1(){
+  console.log("start")
   var diagram=app.diagrams.getCurrentDiagram()
   var views=diagram.ownedViews
   for(i=0;i<views.length;i++){
     var view=views[i]
-    if(view.model.name==="Class1"){
+    if(view.model.name=="Class1"){
       //moveViews接口中Editor类不明 无法使用，只能直接设定属性值
       var width=view.width
       var height=view.height
@@ -32,13 +33,44 @@ function moveView(){
   }
 }
 
+//创建链接,注意head才是目标，tail才是出发点
+function createAssociation(headName,tailName,name){
+    var diagram=app.diagrams.getCurrentDiagram()
+    var views=diagram.ownedViews
+    var headClassView,tailClassView
+    for(i=0;i<views.length;i++){
+      var view=views[i]
+      if(view.model.name===headName){
+        headClassView=view
+      }else if(view.model.name===tailName){
+        tailClassView=view
+      }
+    }
+    var options3 = {
+      id: "UMLAssociation",
+      parent: diagram._parent,
+      diagram: diagram,
+      tailView: tailClassView,
+      headView: headClassView,
+      //headEndStyle:1, //这个属性是决定是否有箭头的关键属性 但是设置操作无效
+      tailModel: tailClassView.model,
+      headModel: headClassView.model
+    }
+    var associationView=app.factory.createModelAndView(options3)
+    associationView.model.name=name
+    //associationView.headEndStyle=1  //这个属性是决定是否有箭头的关键属性 但是设置操作无效
+    console.log(associationView.headEndStyle)
+    moveView("Class1",tailClassView.left-10,tailClassView.top)
+    moveView("Class1",tailClassView.left+10,tailClassView.top)
+}
+
 //移动视图
-function moveView(x,y){
+function moveView(name,x,y){
   var diagram=app.diagrams.getCurrentDiagram()
   var views=diagram.ownedViews
   for(i=0;i<views.length;i++){
     var view=views[i]
-    if(view.model.name==="Class1"){
+    if(view.model.name==name){
       //moveViews接口中Editor类不明 无法使用，只能直接设定属性值
       var width=view.width
       var height=view.height
@@ -46,8 +78,6 @@ function moveView(x,y){
       app.engine.setProperty(view,"top",y)
       app.engine.setProperty(view,"width",width)
       app.engine.setProperty(view,"height",height)
-
-
     }
   }
 }
@@ -79,8 +109,8 @@ function modifyClassModelAttribute(){
       children[0].name="age"
       children[1].name="getAge"
       //需要以下操作后才能生效，原因不明。。。
-      moveView(view.left-10,view.top)
-      moveView(view.left+10,view.top)
+      moveView("Class1",view.left-10,view.top)
+      moveView("Class1",view.left+10,view.top)
     }
   }
 }
@@ -105,10 +135,10 @@ function createModel () {
 //目前默认全部修改的是“Class1”这个类，所有四个函数验证可用
 function handleShowMessage(){
   // modifyClassName('Student')
-  // moveView()
+  // moveView("Class1",312,288)
   // resizeView()
   // modifyClassModelAttribute()
-  connectServer()
+  createAssociation("Class2","Class1","add")
 }
 
 //图内选择一个class元素就是同时选择了view和model
@@ -137,6 +167,7 @@ function postSelectedView(){
 
 function init () {
   app.commands.register('helloworld:show-message', handleShowMessage)
+  connectServer()
   //创建类事件
   app.factory.on('elementCreated',function(model,view){
     console.log(view.model.name)
