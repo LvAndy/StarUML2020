@@ -7,7 +7,7 @@ function modifyClassName(newName){
   var views=diagram.ownedViews
   for(i=0;i<views.length;i++){
     var view=views[i]
-    if(view.model.name==="Class1"){
+    if(view.model.name==='Class1'){
       var model=view.model
       app.engine.setProperty(model, 'name',newName);
     }
@@ -15,19 +15,19 @@ function modifyClassName(newName){
 }
 
 function moveView1(){
-  console.log("start")
+  console.log('start')
   var diagram=app.diagrams.getCurrentDiagram()
   var views=diagram.ownedViews
   for(i=0;i<views.length;i++){
     var view=views[i]
-    if(view.model.name=="Class1"){
+    if(view.model.name=='Class1'){
       //moveViews接口中Editor类不明 无法使用，只能直接设定属性值
       var width=view.width
       var height=view.height
-      app.engine.setProperty(view,"left",view.left-10)
-      app.engine.setProperty(view,"top",view.top-10)
-      app.engine.setProperty(view,"width",width)
-      app.engine.setProperty(view,"height",height)
+      app.engine.setProperty(view,'left',view.left-10)
+      app.engine.setProperty(view,'top',view.top-10)
+      app.engine.setProperty(view,'width',width)
+      app.engine.setProperty(view,'height',height)
 
     }
   }
@@ -47,7 +47,7 @@ function createAssociation(headName,tailName,name){
       }
     }
     var options3 = {
-      id: "UMLAssociation",
+      id: 'UMLAssociation',
       parent: diagram._parent,
       diagram: diagram,
       tailView: tailClassView,
@@ -60,8 +60,8 @@ function createAssociation(headName,tailName,name){
     associationView.model.name=name
     //associationView.headEndStyle=1  //这个属性是决定是否有箭头的关键属性 但是设置操作无效
     console.log(associationView.headEndStyle)
-    moveView("Class1",tailClassView.left-10,tailClassView.top)
-    moveView("Class1",tailClassView.left+10,tailClassView.top)
+    moveView('Class1',tailClassView.left-10,tailClassView.top)
+    moveView('Class1',tailClassView.left+10,tailClassView.top)
 }
 
 //移动视图
@@ -74,10 +74,10 @@ function moveView(name,x,y){
       //moveViews接口中Editor类不明 无法使用，只能直接设定属性值
       var width=view.width
       var height=view.height
-      app.engine.setProperty(view,"left",x)
-      app.engine.setProperty(view,"top",y)
-      app.engine.setProperty(view,"width",width)
-      app.engine.setProperty(view,"height",height)
+      app.engine.setProperty(view,'left',x)
+      app.engine.setProperty(view,'top',y)
+      app.engine.setProperty(view,'width',width)
+      app.engine.setProperty(view,'height',height)
     }
   }
 }
@@ -88,10 +88,10 @@ function resizeView(){
   var views=diagram.ownedViews
   for(i=0;i<views.length;i++){
     var view=views[i]
-    if(view.model.name==="Class1"){
+    if(view.model.name==='Class1'){
       //resizeNode接口中Editor类不明 无法使用，只能直接设定属性值
-      app.engine.setProperty(view,"width",view.width+10)
-      app.engine.setProperty(view,"height",view.height+10)
+      app.engine.setProperty(view,'width',view.width+10)
+      app.engine.setProperty(view,'height',view.height+10)
 
     }
   }
@@ -103,14 +103,14 @@ function modifyClassModelAttribute(){
   var views=diagram.ownedViews
   for(i=0;i<views.length;i++){
     var view=views[i]
-    if(view.model.name==="Class1"){
+    if(view.model.name==='Class1'){
       var model=view.model
       var children=model.getChildren()
-      children[0].name="age"
-      children[1].name="getAge"
+      children[0].name='age'
+      children[1].name='getAge'
       //需要以下操作后才能生效，原因不明。。。
-      moveView("Class1",view.left-10,view.top)
-      moveView("Class1",view.left+10,view.top)
+      moveView('Class1',view.left-10,view.top)
+      moveView('Class1',view.left+10,view.top)
     }
   }
 }
@@ -118,7 +118,7 @@ function modifyClassModelAttribute(){
 function createModel () {
   var diagram1=app.diagrams.getCurrentDiagram()
   var options1 = {
-    id: "UMLClass",
+    id: 'UMLClass',
     parent: diagram1._parent,
     diagram: diagram1,
     x1: 100,
@@ -126,7 +126,7 @@ function createModel () {
     x2: 200,
     y2: 200,
     modelInitializer: function (elem){
-      elem.name="Gundam"
+      elem.name='Gundam'
     }
   }
   var classView1 = app.factory.createModelAndView(options1)
@@ -135,10 +135,10 @@ function createModel () {
 //目前默认全部修改的是“Class1”这个类，所有四个函数验证可用
 function handleShowMessage(){
   // modifyClassName('Student')
-  // moveView("Class1",312,288)
+  // moveView('Class1',312,288)
   // resizeView()
   // modifyClassModelAttribute()
-  createAssociation("Class2","Class1","add")
+  createAssociation('Class2','Class1','add')
 }
 
 //图内选择一个class元素就是同时选择了view和model
@@ -170,20 +170,24 @@ function init () {
   connectServer()
   //创建类事件
   app.factory.on('elementCreated',function(model,view){
-    console.log(view.model.name)
-    console.log(view.left)
-    console.log(view.top)
-    console.log(view.width)
-    console.log(view.height)
+    if(view.getDisplayClassName()==='UMLClassView'){
+      var obj=new Object()
+      obj.event='UMLClassCreated'
+      obj.name=view.model.name
+      obj.left=view.left
+      obj.top=view.top
+      obj.width=view.width
+      obj.height=view.height
+      var json=JSON.stringify(obj)
+      sendMsg(json)
+    }
   })
-  //修改类名称或者点击创建/删除属性或接口按钮事件
+  //点击创建/删除属性或接口按钮事件,修改类名称时也会触发，但是综合考虑不在这里做处理
   app.repository.on('updated',function(updatedElems){
-    var flag=false
+    var flag=false,obj=new Object(),name
     for(i=0;i<updatedElems.length;i++){
-      console.log()
       if(updatedElems[i].getDisplayClassName()==='Class'){
         name=updatedElems[i].name
-        console.log(name)
         flag=true
         break
       }
@@ -197,34 +201,67 @@ function init () {
     for(i=0;i<views.length;i++){
       var view=views[i]
       if(view.model.name===name){
-        var childArray=view.model.getChildren()
-        for(j=0;j<childArray.length;j++){
-          console.log(childArray[j].getDisplayClassName())
-          console.log(childArray[j].name)
+        var attributes=[],operations=[]
+        for(j=0;j<view.model.attributes.length;j++){
+          attributes.push(view.model.attributes[j].name)
         }
-        console.log(view.model.name)
-        console.log(view.left)
-        console.log(view.top)
-        console.log(view.width)
-        console.log(view.height)
+        for(j=0;j<view.model.operations.length;j++){
+          operations.push(view.model.operations[j].name)
+        }
+        obj.event='emendAttrOrOper'
+        obj.name=name
+        obj.attributes=attributes
+        obj.operations=operations
+        obj.left=view.left
+        obj.top=view.top
+        obj.width=view.width
+        obj.height=view.height
+        var json=JSON.stringify(obj)
+        sendMsg(json)
       }
     }
-    console.log("this is end point")
-
   })
-  //编辑属性或接口名称事件
+  //修改类名称或者编辑属性或接口名称事件
   app.repository.on('operationExecuted',function(operation){
-    
-    if(operation.name=='change properties'||operation.name=='change operation'){
-      console.log(app.selections.getSelectedModels()[0]._parent.name)
-      console.log(operation.ops[0].arg.n)
-      console.log(operation.ops[0].arg.o)
+    var obj=new Object()
+    var parentName=app.selections.getSelectedModels()[0]._parent.name
+    var currName=app.selections.getSelectedModels()[0].name
+    console.log(operation)
+    if(operation.name=='change properties'){
+      if(parentName=='Model'){
+        obj.event='modifyClassName'
+      }else{
+        obj.event='modifyAttr'
+        obj.className=parentName
+      }
+      obj.old=operation.ops[0].arg.o
+      obj.new=operation.ops[0].arg.n
+    }
+    if(operation.name=='change operation'){
+      obj.event='modifyOper'
+      obj.className=parentName
+      obj.old=operation.ops[0].arg.o
+      obj.new=operation.ops[0].arg.n
     }
     if(operation.name=='move views'){
-      console.log(operation)
+      obj.event='moveView'
+      obj.className=currName
+      obj.oldLeft=operation.ops[0].arg.o
+      obj.newLeft=operation.ops[0].arg.n
+      obj.oldTop=operation.ops[1].arg.o
+      obj.newTop=operation.ops[1].arg.n
     }
     if(operation.name=='resize node'){
-      
+      obj.event='resizeNode'
+      obj.className=currName
+      obj.oldWidth=operation.ops[0].arg.o
+      obj.newWidth=operation.ops[0].arg.n
+      obj.oldHeight=operation.ops[1].arg.o
+      obj.newHeight=operation.ops[1].arg.n
+    }
+    if(operation.name!='add model'){
+      var json=JSON.stringify(obj)
+      sendMsg(json)
     }
   })
 
@@ -233,7 +270,7 @@ function init () {
 //     for(i=0;i<updatedElems.length;i++){
 //       console.log(updatedElems[i])
 //     }
-//     console.log("this is end point")
+//     console.log('this is end point')
 //   })
   
 
@@ -243,14 +280,13 @@ function init () {
 var socket
 
 function connectServer(){
-  var socket_ip="121.4.81.114"
+  var socket_ip='121.4.81.114'
 		
   socket= new WebSocket('ws://'+socket_ip+':8092')
 
   socket.onopen = function(event)
   {
-    console.log("连接服务成功！")
-    sendMsg()
+    sendMsg('连接成功！')
   }
   // 监听消息
   socket.onmessage = function(event)
@@ -270,8 +306,8 @@ function connectServer(){
   }
 }
 
-function sendMsg(){
-  socket.send("你好！"); 
+function sendMsg(msg){
+  socket.send(msg); 
 }
 
 exports.init = init
