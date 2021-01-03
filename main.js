@@ -259,7 +259,7 @@ function init () {
       obj.oldHeight=operation.ops[1].arg.o
       obj.newHeight=operation.ops[1].arg.n
     }
-    if(operation.name!='add model'){
+    if(operation.name!='add model'&&operation.name!='Create Class'){
       var json=JSON.stringify(obj)
       sendMsg(json)
     }
