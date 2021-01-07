@@ -88,10 +88,13 @@ public class WSUtils {
      * 向所有的用户发送消息
      *
      */
-    public static void sendMessageToAll(String message) {
+    public static void sendMessageToAll(String message,WebSocket creator) {
         Set<WebSocket> keySet = wsUserMap.keySet();
         synchronized (keySet) {
             for (WebSocket conn : keySet) {
+                if(conn==creator){
+                    continue;
+                }
                 String user = wsUserMap.get(conn);
                 if (user != null) {
                     conn.send(message);

@@ -1,15 +1,50 @@
 //view到model是多对一的关系 两方都有对应的api，所以可能开发架构的核心类是以view为中心这个样子的
 //具体是指先获取到对应的diagram这个视图，然后遍历每个view看对应model的name是否正确
 
+//全局锁
+var createClass=1,update=1,operation=1
 //修改名称
-function modifyClassName(newName){
+function modifyClassName(msg){
   var diagram=app.diagrams.getCurrentDiagram()
   var views=diagram.ownedViews
   for(i=0;i<views.length;i++){
     var view=views[i]
-    if(view.model.name==='Class1'){
+    if(view.model.name===msg.old){
       var model=view.model
-      app.engine.setProperty(model, 'name',newName);
+      app.engine.setProperty(model, 'name',msg.new);
+      break;
+    }
+  }
+}
+
+function modifyAttr(msg){
+  var diagram=app.diagrams.getCurrentDiagram()
+  var views=diagram.ownedViews
+  for(i=0;i<views.length;i++){
+    var view=views[i]
+    if(view.model.name===msg.className){
+      var attributes=view.model.attributes
+      for(i=0;i<attributes.length;i++){
+        if(attributes[i].name===msg.old){
+          app.engine.setProperty(attributes[i], 'name',msg.new);
+        }
+      }
+    }
+  }
+}
+
+function modifyOper(msg){
+  var diagram=app.diagrams.getCurrentDiagram()
+  var views=diagram.ownedViews
+  for(i=0;i<views.length;i++){
+    var view=views[i]
+    if(view.model.name===msg.className){
+      var operations=view.model.operations
+      for(i=0;i<operations.length;i++){
+        if(operations[i].name===msg.old){
+          app.engine.setProperty(operations[i], 'name',msg.new);
+        }
+      }
     }
   }
 }
@@ -65,17 +100,17 @@ function createAssociation(headName,tailName,name){
 }
 
 //移动视图
-function moveView(name,x,y){
+function moveView(msg){
   var diagram=app.diagrams.getCurrentDiagram()
   var views=diagram.ownedViews
   for(i=0;i<views.length;i++){
     var view=views[i]
-    if(view.model.name==name){
+    if(view.model.name==msg.className){
       //moveViews接口中Editor类不明 无法使用，只能直接设定属性值
       var width=view.width
       var height=view.height
-      app.engine.setProperty(view,'left',x)
-      app.engine.setProperty(view,'top',y)
+      app.engine.setProperty(view,'left',view.left+msg.newLeft)
+      app.engine.setProperty(view,'top',view.top+msg.newTop)
       app.engine.setProperty(view,'width',width)
       app.engine.setProperty(view,'height',height)
     }
@@ -83,15 +118,15 @@ function moveView(name,x,y){
 }
 
 //调整视图大小
-function resizeView(){
+function resizeView(msg){
   var diagram=app.diagrams.getCurrentDiagram()
   var views=diagram.ownedViews
   for(i=0;i<views.length;i++){
     var view=views[i]
-    if(view.model.name==='Class1'){
+    if(view.model.name===msg.className){
       //resizeNode接口中Editor类不明 无法使用，只能直接设定属性值
-      app.engine.setProperty(view,'width',view.width+10)
-      app.engine.setProperty(view,'height',view.height+10)
+      app.engine.setProperty(view,'width',msg.newWidth)
+      app.engine.setProperty(view,'height',msg.newHeight)
 
     }
   }
@@ -115,21 +150,74 @@ function modifyClassModelAttribute(){
   }
 }
 
-function createModel () {
+function createModel (msg) {
   var diagram1=app.diagrams.getCurrentDiagram()
   var options1 = {
     id: 'UMLClass',
     parent: diagram1._parent,
     diagram: diagram1,
-    x1: 100,
-    y1: 100,
-    x2: 200,
-    y2: 200,
+    x1: msg.left,
+    y1: msg.top,
+    x2: msg.left+msg.width,
+    y2: msg.top,
     modelInitializer: function (elem){
-      elem.name='Gundam'
+      elem.name=msg.name
     }
   }
   var classView1 = app.factory.createModelAndView(options1)
+}
+
+function createAttribute (name,model) {
+  var attr = app.factory.createModel({ id: "UMLAttribute", parent: model, field: "attributes" })
+  attr.name=name
+}
+
+function createOperation (name,model) {
+  var oper = app.factory.createModel({ id: "UMLOperation", parent: model, field: "operations" })
+  oper.name=name
+}
+
+function updateModel(msg){
+  var diagram=app.diagrams.getCurrentDiagram()
+  var views=diagram.ownedViews
+  for(i=0;i<views.length;i++){
+    var view=views[i]
+    var model=view.model
+    if(model.name==msg.name){
+      if(msg.attributes.length>model.attributes.length){
+        createAttribute(msg.attributes[msg.attributes.length-1],model)
+      }else if(msg.attributes.length<model.attributes.length){
+        for(i=0;i<model.attributes.length;i++){
+          if(model.attributes[i].name!=msg.attributes[i]){
+            var deleteAttr=[model.attributes[i]]
+            app.engine.deleteElements(deleteAttr,[])
+          }
+        }
+      }else if(msg.operations.length>model.operations.length){
+        createOperation(msg.operations[msg.operations.length-1],model)
+      }else if(msg.operations.length<model.operations.length){
+        for(i=0;i<model.operations.length;i++){
+          if(model.operations[i].name!=msg.operations[i]){
+            var deleteOper=[model.operations[i]]
+            app.engine.deleteElements(deleteOper,[])
+          }
+        }
+      }
+    }
+  }
+}
+
+function deleteModel (msg) {
+  var diagram=app.diagrams.getCurrentDiagram()
+  var views=diagram.ownedViews
+  for(i=0;i<views.length;i++){
+    var view=views[i]
+    if(view.model.name===msg.name){
+      var model=view.model
+      app.engine.deleteElements([model],[view])
+      break;
+    }
+  }
 }
 
 //目前默认全部修改的是“Class1”这个类，所有四个函数验证可用
@@ -138,7 +226,7 @@ function handleShowMessage(){
   // moveView('Class1',312,288)
   // resizeView()
   // modifyClassModelAttribute()
-  createAssociation('Class2','Class1','add')
+  // createAssociation('Class2','Class1','add')
 }
 
 //图内选择一个class元素就是同时选择了view和model
@@ -170,6 +258,13 @@ function init () {
   connectServer()
   //创建类事件
   app.factory.on('elementCreated',function(model,view){
+    if(view==null){
+      return
+    }
+    if(createClass==0){
+      createClass=1
+      return
+    }
     if(view.getDisplayClassName()==='UMLClassView'){
       var obj=new Object()
       obj.event='UMLClassCreated'
@@ -184,6 +279,10 @@ function init () {
   })
   //点击创建/删除属性或接口按钮事件,修改类名称时也会触发，但是综合考虑不在这里做处理
   app.repository.on('updated',function(updatedElems){
+    if(update==0){
+      update=1
+      return
+    }
     var flag=false,obj=new Object(),name
     for(i=0;i<updatedElems.length;i++){
       if(updatedElems[i].getDisplayClassName()==='Class'){
@@ -223,6 +322,10 @@ function init () {
   })
   //修改类名称或者编辑属性或接口名称事件
   app.repository.on('operationExecuted',function(operation){
+    if(operation==0){
+      operation=1
+      return
+    }
     var obj=new Object()
     var parentName=app.selections.getSelectedModels()[0]._parent.name
     var currName=app.selections.getSelectedModels()[0].name
@@ -246,17 +349,13 @@ function init () {
     if(operation.name=='move views'){
       obj.event='moveView'
       obj.className=currName
-      obj.oldLeft=operation.ops[0].arg.o
-      obj.newLeft=operation.ops[0].arg.n
-      obj.oldTop=operation.ops[1].arg.o
-      obj.newTop=operation.ops[1].arg.n
+      obj.newLeft=operation.ops[0].arg.n-operation.ops[0].arg.o
+      obj.newTop=operation.ops[1].arg.n-operation.ops[1].arg.o
     }
     if(operation.name=='resize node'){
       obj.event='resizeNode'
       obj.className=currName
-      obj.oldWidth=operation.ops[0].arg.o
       obj.newWidth=operation.ops[0].arg.n
-      obj.oldHeight=operation.ops[1].arg.o
       obj.newHeight=operation.ops[1].arg.n
     }
     if(operation.name!='add model'&&operation.name!='Create Class'){
@@ -281,18 +380,40 @@ var socket
 
 function connectServer(){
   var socket_ip='121.4.81.114'
+  // var socket_ip='127.0.0.1'
 		
   socket= new WebSocket('ws://'+socket_ip+':8092')
 
   socket.onopen = function(event)
   {
-    sendMsg('连接成功！')
+    sendMsg('{"msg":"连接成功！"}')
   }
   // 监听消息
   socket.onmessage = function(event)
   {
     console.log('Client received a message',event)
-    console.log(event.data)
+    var msg=JSON.parse(event.data.substr(5))
+    console.log(msg)
+    if(msg.event==='UMLClassCreated'){
+      createClass=0
+      createModel(msg)
+    }else if(msg.event==='emendAttrOrOper'){
+      update=0
+      updateModel(msg)
+    }else{
+      operation=0
+      if(msg.event==='modifyClassName'){
+        modifyClassName(msg)
+      }else if(msg.event==='modifyAttr'){
+        modifyAttr(msg)
+      }else if(msg.event==='modifyOper'){
+        modifyOper(msg)
+      }else if(msg.event==='moveView'){
+        moveView(msg)
+      }else if(msg.event==='resizeNode'){
+        resizeView(msg)
+      }
+    }
   }
 
   // 监听Socket的关闭
@@ -311,4 +432,3 @@ function sendMsg(msg){
 }
 
 exports.init = init
-
