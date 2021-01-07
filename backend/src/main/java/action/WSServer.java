@@ -36,7 +36,7 @@ public class WSServer extends WebSocketServer {
         String msg = "收到信息："+message;
         System.out.println(msg);
         userJoin(conn,message);//用户加入
-        WSUtils.sendMessageToAll(msg);
+        WSUtils.sendMessageToAll(msg,conn);
     }
 
 
