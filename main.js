@@ -2,8 +2,8 @@
 //具体是指先获取到对应的diagram这个视图，然后遍历每个view看对应model的name是否正确
 
 //全局锁
-var createClass=1,update=1,op=1//修改名称
-
+var createClass=1,update=1,operation=1
+//修改名称
 function modifyClassName(msg){
   var diagram=app.diagrams.getCurrentDiagram()
   var views=diagram.ownedViews
@@ -13,37 +13,6 @@ function modifyClassName(msg){
       var model=view.model
       app.engine.setProperty(model, 'name',msg.new);
       break;
-    }
-  }
-}
-
-function modifyVis(msg){
-  var diagram=app.diagrams.getCurrentDiagram()
-  var views=diagram.ownedViews
-  for(i=0;i<views.length;i++){
-    var view=views[i]
-    if(view.model.name===msg.className){
-      var attributes=view.model.attributes
-      var operations=view.model.operations
-      modifyAttrVis(attributes,msg)
-      modifyOperVis(operations,msg)
-    }
-  }
-}
-
-function modifyAttrVis(attributes,msg){
-  for(i=0;i<attributes.length;i++){
-    if(attributes[i].name===msg.name){
-      app.engine.setProperty(attributes[i], 'visibility',msg.new);
-    }
-  }
-}
-
-function modifyOperVis(operations,msg){
-  console.log(operations)
-  for(i=0;i<operations.length;i++){
-    if(operations[i].name===msg.name){
-      app.engine.setProperty(operations[i], 'visibility',msg.new);
     }
   }
 }
@@ -64,8 +33,6 @@ function modifyAttr(msg){
   }
 }
 
-
-
 function modifyOper(msg){
   var diagram=app.diagrams.getCurrentDiagram()
   var views=diagram.ownedViews
@@ -75,7 +42,6 @@ function modifyOper(msg){
       var operations=view.model.operations
       for(i=0;i<operations.length;i++){
         if(operations[i].name===msg.old){
-          console.log(msg.new)
           app.engine.setProperty(operations[i], 'name',msg.new);
         }
       }
@@ -201,23 +167,6 @@ function createModel (msg) {
   var classView1 = app.factory.createModelAndView(options1)
 }
 
-function createInterface(msg){
-  var diagram1=app.diagrams.getCurrentDiagram()
-  var options1 = {
-    id: 'UMLInterface',
-    parent: diagram1._parent,
-    diagram: diagram1,
-    x1: msg.left,
-    y1: msg.top,
-    x2: msg.left+msg.width,
-    y2: msg.top,
-    modelInitializer: function (elem){
-      elem.name=msg.name
-    }
-  }
-  var classView1 = app.factory.createModelAndView(options1)
-}
-
 function createAttribute (name,model) {
   var attr = app.factory.createModel({ id: "UMLAttribute", parent: model, field: "attributes" })
   attr.name=name
@@ -309,7 +258,6 @@ function init () {
   connectServer()
   //创建类事件
   app.factory.on('elementCreated',function(model,view){
-    console.log(model)
     if(view==null){
       return
     }
@@ -317,18 +265,14 @@ function init () {
       createClass=1
       return
     }
-    var obj=new Object()
-    obj.name=view.model.name
-    obj.left=view.left
-    obj.top=view.top
-    obj.width=view.width
-    obj.height=view.height
     if(view.getDisplayClassName()==='UMLClassView'){
+      var obj=new Object()
       obj.event='UMLClassCreated'
-      var json=JSON.stringify(obj)
-      sendMsg(json)
-    }else if(view.getDisplayClassName()==='UMLInterfaceView'){
-      obj.event='UMLInterfaceCreated'
+      obj.name=view.model.name
+      obj.left=view.left
+      obj.top=view.top
+      obj.width=view.width
+      obj.height=view.height
       var json=JSON.stringify(obj)
       sendMsg(json)
     }
@@ -341,7 +285,7 @@ function init () {
     }
     var flag=false,obj=new Object(),name
     for(i=0;i<updatedElems.length;i++){
-      if(updatedElems[i].getDisplayClassName()==='Class'||updatedElems[i].getDisplayClassName()==='Interface'){
+      if(updatedElems[i].getDisplayClassName()==='Class'){
         name=updatedElems[i].name
         flag=true
         break
@@ -356,7 +300,6 @@ function init () {
     for(i=0;i<views.length;i++){
       var view=views[i]
       if(view.model.name===name){
-        console.log(name)
         var attributes=[],operations=[]
         for(j=0;j<view.model.attributes.length;j++){
           attributes.push(view.model.attributes[j].name)
@@ -368,31 +311,26 @@ function init () {
         obj.name=name
         obj.attributes=attributes
         obj.operations=operations
+        obj.left=view.left
+        obj.top=view.top
+        obj.width=view.width
+        obj.height=view.height
         var json=JSON.stringify(obj)
         sendMsg(json)
-        console.log(json)
       }
     }
   })
   //修改类名称或者编辑属性或接口名称事件
   app.repository.on('operationExecuted',function(operation){
-    if(op===0){
-      op=1
+    if(operation==0){
+      operation=1
       return
     }
     var obj=new Object()
     var parentName=app.selections.getSelectedModels()[0]._parent.name
     var currName=app.selections.getSelectedModels()[0].name
     console.log(operation)
-    if(operation.ops[0].arg.f==='visibility'){
-      obj.event='changeVis'  
-      obj.className=parentName
-      obj.name=currName
-      obj.old=operation.ops[0].arg.o
-      obj.new=operation.ops[0].arg.n
-      console.log(obj)
-    }
-    else if(operation.name=='change properties'){
+    if(operation.name=='change properties'){
       if(parentName=='Model'){
         obj.event='modifyClassName'
       }else{
@@ -402,20 +340,19 @@ function init () {
       obj.old=operation.ops[0].arg.o
       obj.new=operation.ops[0].arg.n
     }
-    else if(operation.name=='change operation'){
+    if(operation.name=='change operation'){
       obj.event='modifyOper'
       obj.className=parentName
-      obj.field=operation.ops[0].arg.f
       obj.old=operation.ops[0].arg.o
       obj.new=operation.ops[0].arg.n
     }
-    else if(operation.name=='move views'){
+    if(operation.name=='move views'){
       obj.event='moveView'
       obj.className=currName
       obj.newLeft=operation.ops[0].arg.n-operation.ops[0].arg.o
       obj.newTop=operation.ops[1].arg.n-operation.ops[1].arg.o
     }
-    else if(operation.name=='resize node'){
+    if(operation.name=='resize node'){
       obj.event='resizeNode'
       obj.className=currName
       obj.newWidth=operation.ops[0].arg.n
@@ -424,7 +361,6 @@ function init () {
     if(operation.name!='add model'&&operation.name!='Create Class'){
       var json=JSON.stringify(obj)
       sendMsg(json)
-      console.log(json)
     }
   })
 
@@ -461,23 +397,17 @@ function connectServer(){
     if(msg.event==='UMLClassCreated'){
       createClass=0
       createModel(msg)
-    }else if(msg.event==='UMLInterfaceCreated'){
-      createClass=0
-      createInterface(msg)
-    }
-    else if(msg.event==='emendAttrOrOper'){
+    }else if(msg.event==='emendAttrOrOper'){
       update=0
       updateModel(msg)
     }else{
-      op=0
+      operation=0
       if(msg.event==='modifyClassName'){
         modifyClassName(msg)
       }else if(msg.event==='modifyAttr'){
         modifyAttr(msg)
       }else if(msg.event==='modifyOper'){
         modifyOper(msg)
-      }else if(msg.event==='changeVis'){
-        modifyVis(msg)
       }else if(msg.event==='moveView'){
         moveView(msg)
       }else if(msg.event==='resizeNode'){
