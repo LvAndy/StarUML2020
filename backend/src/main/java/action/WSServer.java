@@ -1,8 +1,10 @@
 package action;
 
+import com.google.gson.Gson;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
+import utils.User;
 import utils.WSUtils;
 
 import java.net.InetSocketAddress;
@@ -21,7 +23,6 @@ public class WSServer extends WebSocketServer {
     @Override
     public void onOpen(WebSocket conn, ClientHandshake handshake) {
         // ws连接的时候触发的代码，onOpen中我们不做任何操作
-
     }
 
     @Override
@@ -34,9 +35,13 @@ public class WSServer extends WebSocketServer {
     @Override
     public void onMessage(WebSocket conn, String message) {
         String msg = "收到信息："+message;
-        System.out.println(msg);
-        userJoin(conn,message);//用户加入
-        WSUtils.sendMessageToAll(msg,conn);
+        String[]infor=msg.split(" ");
+        if (message.contains("login")) {
+            User user =User.builder().username(infor[1]).groupId(infor[2]).password(infor[3]).build();
+            System.out.println(message);
+            userJoin(conn, user);//用户加入
+        }
+        WSUtils.sendMessageToGroupUser(conn, msg);
     }
 
 
@@ -57,10 +62,10 @@ public class WSServer extends WebSocketServer {
     /**
      * 将websocket加入用户池
      * @param conn
-     * @param userName
+     * @param user
      */
-    private void userJoin(WebSocket conn,String userName){
-        WSUtils.addUser(userName, conn);
+    private void userJoin(WebSocket conn,User user){
+        WSUtils.addUser(conn,user);
     }
 
 }

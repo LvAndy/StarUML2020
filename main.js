@@ -444,13 +444,15 @@ var socket
 
 function connectServer(){
   var socket_ip='121.4.81.114'
-  // var socket_ip='127.0.0.1'
+  //var socket_ip='127.0.0.1'
 		
   socket= new WebSocket('ws://'+socket_ip+':8092')
 
   socket.onopen = function(event)
   {
-    sendMsg('{"msg":"连接成功！"}')
+	console.log("开始连接")
+    sendMsg("login 123 321 321")
+	//依次为login 用户名 组号 密码
   }
   // 监听消息
   socket.onmessage = function(event)
