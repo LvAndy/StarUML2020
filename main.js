@@ -261,15 +261,30 @@ function updateModel(msg) {
 
 function deleteModel(msg) {
   modelList = app.repository.findAll(function (target) {
-    check = msg.objlist.find((obj) => obj.name === target.name && obj.deleteFromModel === true)
-    if (check) {
-      return true
+    if (target.getDisplayClassName() === 'Class' || target.getDisplayClassName() === 'Interface') {
+      var check = msg.objlist.find((obj) => obj.name === target.name && obj.deleteFromModel === true)
+      if (check) {
+        return true
+      }
+    }
+    else if (target.getDisplayClassName() === 'Association') {
+      var check = msg.asscolist.find((obj) => obj.headName === target.end2.reference.name && obj.tailName === target.end1.reference.name && obj.deleteFromModel === true)
+      if (check) {
+        return true
+      }
     }
     return false
   })
   viewList = app.repository.findAll(function (target) {
     if (target.getDisplayClassName() === 'UMLClassView' || target.getDisplayClassName() === 'UMLInterfaceView') {
-      check = msg.objlist.find((obj) => obj.name === target.model.name)
+      var check = msg.objlist.find((obj) => obj.name === target.model.name)
+      if (check) {
+        return true
+      }
+    }
+    else if (target.getDisplayClassName() === 'UMLAssociationView') {
+      console.log(target)
+      var check = msg.asscolist.find((obj) => obj.headName === target.head.model.name && obj.tailName === target.tail.model.name)
       if (check) {
         return true
       }
@@ -445,6 +460,7 @@ function init() {
     }
     if (operation.name === 'delete elements') {
       var objlist = []
+      var asscolist = []
       for (el of operation.ops) {
         if (el.op === 'R') {
           if (el.arg._type === 'UMLClassView' || el.arg._type === 'UMLInterfaceView') {
@@ -453,12 +469,19 @@ function init() {
             obj.deleteFromModel = false
             objlist.push(obj)
           }
+          else if (el.arg._type === 'UMLAssociationView') {
+            var obj = new Object()
+            obj.headName = app.repository.get(el.arg.head.$ref).model.name
+            obj.tailName = app.repository.get(el.arg.tail.$ref).model.name
+            obj.deleteFromModel = false
+            asscolist.push(obj)
+          }
         }
       }
       for (el of operation.ops) {
         if (el.op === 'R') {
           if (el.arg._type === 'UMLClass' || el.arg._type === 'UMLInterface') {
-            tar = objlist.find((obj) => obj.name === el.arg.name)
+            var tar = objlist.find((obj) => obj.name === el.arg.name)
             if (tar) {
               tar.deleteFromModel = true
             }
@@ -469,20 +492,17 @@ function init() {
               objlist.push(obj)
             }
           }
-        }
-      }
-      for (el of operation.ops) {
-        if (el.op === 'R') {
-          if (el.arg._type === 'UMLClass' || el.arg._type === 'UMLInterface') {
-            tar = objlist.find((obj) => obj.name === el.arg.name)
+          else if (el.arg._type === 'UMLAssociation') {
+            var tar = asscolist.find((assco) => assco.headName === app.repository.get(el.arg.end2.reference.$ref).name && assco.tailName === app.repository.get(el.arg.end1.reference.$ref).name)
             if (tar) {
               tar.deleteFromModel = true
             }
             else {
               var obj = new Object()
-              obj.name = el.arg.name
+              obj.headName = app.repository.get(el.arg.end2.reference.$ref).name
+              obj.tailName = app.repository.get(el.arg.end1.reference.$ref).name
               obj.deleteFromModel = true
-              objlist.push(obj)
+              asscolist.push(obj)
             }
           }
         }
@@ -490,6 +510,7 @@ function init() {
       var message = new Object()
       message.event = 'deleteElements'
       message.objlist = objlist
+      message.asscolist = asscolist
       var json = JSON.stringify(message)
       sendMsg(json)
     }
