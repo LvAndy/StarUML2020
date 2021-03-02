@@ -105,6 +105,7 @@ function moveView1() {
 
 //创建链接,注意head才是目标，tail才是出发点
 function createAssociation(headName, tailName, name) {
+  console.log(name)
   var diagram = app.diagrams.getCurrentDiagram()
   var views = diagram.ownedViews
   var headClassView, tailClassView
@@ -331,6 +332,15 @@ function postSelectedView() {
 function init() {
   app.commands.register('helloworld:show-message', handleShowMessage)
   connectServer()
+  //登录
+  app.dialogs.showInputDialog("输入用户名，组号，密码").then(function ({buttonId, returnValue}) {
+    if (buttonId === 'ok'&&returnValue!='') {
+      console.log(returnValue)
+      sendMsg('login '+returnValue)
+    } else {
+      console.log("User canceled")
+    }
+  })
   //创建类事件
   app.factory.on('elementCreated', function (model, view) {
     console.log(model)
@@ -408,7 +418,7 @@ function init() {
     var parentName = app.selections.getSelectedModels()[0]._parent.name
     var currName = app.selections.getSelectedModels()[0].name
     console.log(operation)
-    if (operation.ops[0].arg.f === 'visibility') {
+    if (operation.ops[0].arg.f === 'visibility'&&operation.name!='Create Association') {
       obj.event = 'changeVis'
       obj.className = parentName
       obj.name = currName
@@ -420,6 +430,7 @@ function init() {
       if (parentName == 'Model') {
         obj.event = 'modifyClassName'
       } else {
+        console.log(app.selections.getSelectedModels()[0])
         obj.event = 'modifyAttr'
         obj.className = parentName
       }
@@ -444,6 +455,16 @@ function init() {
       obj.className = currName
       obj.newWidth = operation.ops[0].arg.n
       obj.newHeight = operation.ops[1].arg.n
+    }
+    else if(operation.name == 'Create Association'){
+      obj.event='createAssociation'
+      var elems=operation.ops[0]._elem
+      var head1=elems.end1.reference.name
+      var head2=elems.end2.reference.name
+      var name=elems.name
+      obj.head1=head1
+      obj.head2=head2
+      obj.name=name
     }
     if (operation.name != 'add model' && operation.name != 'Create Class') {
       var json = JSON.stringify(obj)
@@ -516,13 +537,6 @@ function init() {
     }
   })
 
-  //   app.repository.on('updated',function(updatedElems){
-  //     for(i=0;i<updatedElems.length;i++){
-  //       console.log(updatedElems[i])
-  //     }
-  //     console.log('this is end point')
-  // })
-
 }
 
 var socket
@@ -534,8 +548,8 @@ function connectServer() {
   socket = new WebSocket('ws://' + socket_ip + ':8092')
 
   socket.onopen = function (event) {
-    console.log("开始连接")
-    sendMsg("login 123 321 321")
+    // console.log("开始连接")
+    // sendMsg("login 123 321 321")
     //依次为login 用户名 组号 密码
   }
   // 监听消息
@@ -571,11 +585,14 @@ function connectServer() {
         moveView(msg)
       } else if (msg.event === 'resizeNode') {
         resizeView(msg)
+      }else if(msg.event==='createAssociation'){
+        console.log('11')
+        createAssociation(msg.head1,msg.head2,msg.name)
       }
     }
   }
 
-  // 监听Socket的关闭
+  //监听Socket的关闭
   socket.onclose = function (event) {
     console.log('连接已经断开')
   }
