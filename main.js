@@ -310,11 +310,7 @@ function init () {
   app.dialogs.showInputDialog("Enter your part ,your name and your password").then(function ({buttonId, returnValue}) {
     if (buttonId === 'ok') {
       var obj=new Object()
-      word=returnValue
-      arr=word.split(" ")
-      obj.part=arr[0]
-      obj.name=arr[1]
-      obj.pass=arr[2]
+      obj.check=returnValue
       obj.event='login'
       var json=JSON.stringify(obj)
       sendMsg(json)
@@ -449,6 +445,7 @@ function init () {
       var head=app.selections.getSelectedModels()[0]
       var head1=head.end1.reference.name
       var head2=head.end2.reference.name
+      obj.head=head
       obj.head1=head1
       obj.head2=head2
     }
@@ -489,8 +486,8 @@ function connectServer(){
     console.log('Client received a message',event)
     var msg=JSON.parse(event.data.substr(5))
     console.log(msg)
-    if(msg.event==='login'){
-      alert('success')
+    if(msg.event==='login') {
+      //你这里自己看下 登录怎么返回数据
     }
     if(msg.event==='UMLClassCreated'){
       createClass=0
@@ -516,7 +513,9 @@ function connectServer(){
         moveView(msg)
       }else if(msg.event==='resizeNode') {
         resizeView(msg)
-      }else if(msg.event==='Create Association'){}
+      }else if(msg.event==='Create Association'){
+        createAssociation(msg.head1,msg.head2,msg.head)
+      }
       }
     }
   }
