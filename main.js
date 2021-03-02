@@ -309,11 +309,7 @@ function init () {
   connectServer()
   app.dialogs.showInputDialog("Enter your part ,your name and your password").then(function ({buttonId, returnValue}) {
     if (buttonId === 'ok') {
-      var obj=new Object()
-      obj.check=returnValue
-      obj.event='login'
-      var json=JSON.stringify(obj)
-      sendMsg(json)
+      sendMsg(returnValue)
     } else {
       console.log("User canceled")
     }
@@ -486,9 +482,6 @@ function connectServer(){
     console.log('Client received a message',event)
     var msg=JSON.parse(event.data.substr(5))
     console.log(msg)
-    if(msg.event==='login') {
-      //你这里自己看下 登录怎么返回数据
-    }
     if(msg.event==='UMLClassCreated'){
       createClass=0
       createModel(msg)
@@ -519,17 +512,6 @@ function connectServer(){
       }
     }
   }
-
-  // 监听Socket的关闭
-  socket.onclose = function(event)
-  {
-    console.log('连接已经断开')
-  }
-
-  socket.onerror = function(event) {
-    alert('无法连接到:' + socket_ip);
-  }
-}
 
 function sendMsg(msg){
   socket.send(msg);
