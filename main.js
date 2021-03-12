@@ -411,6 +411,7 @@ function init() {
   //修改类名称或者编辑属性或接口名称事件
   app.repository.on('operationExecuted', function (operation) {
     if (op === 0) {
+	  console.log('cycle')
       op = 1
       return
     }
@@ -418,6 +419,7 @@ function init() {
     var parentName = app.selections.getSelectedModels()[0]._parent.name
     var currName = app.selections.getSelectedModels()[0].name
     console.log(operation)
+	console.log(parentName+' '+currName)
     if (operation.ops[0].arg.f === 'visibility'&&operation.name!='Create Association') {
       obj.event = 'changeVis'
       obj.className = parentName
@@ -533,6 +535,7 @@ function init() {
       message.objlist = objlist
       message.asscolist = asscolist
       var json = JSON.stringify(message)
+	  
       sendMsg(json)
     }
   })
@@ -571,7 +574,7 @@ function connectServer() {
     else if (msg.event === 'emendAttrOrOper') {
       update = 0
       updateModel(msg)
-    } else {
+    } else if(msg.event.length!=undefined&&msg.event.length>0) {
       op = 0
       if (msg.event === 'modifyClassName') {
         modifyClassName(msg)
@@ -587,7 +590,7 @@ function connectServer() {
         resizeView(msg)
       }else if(msg.event==='createAssociation'){
         console.log('11')
-        createAssociation(msg.head1,msg.head2,msg.name)
+        createAssociation(msg.head2,msg.head1,msg.name)
       }
     }
   }
